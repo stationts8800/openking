@@ -1,0 +1,632 @@
+<!DOCTYPE html><html lang="th"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ร้านค้าออนไลน์</title><!-- ================= LOGIN STYLE ================= --><style>
+*{box-sizing:border-box;font-family:Arial, sans-serif;}#loginPage{
+position:fixed;
+top:0;left:0;
+width:100%;
+height:100%;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#ff6600,#ff9966);
+z-index:9999;
+}
+
+.wrapper{position:relative;}
+
+.logo-float{
+position:absolute;
+top:-110px;
+left:50%;
+transform:translate(-50%, 0);
+background:transparent;/* ✅ เอาวงขาวออก* /
+width:195px;
+height:195px;
+border-radius:50%;
+display:flex;
+justify-content:center;
+align-items:center;
+box-shadow:none;/ ไม่ให้มีเงาวงกลม */
+}
+
+.logo-float img{
+width:195px;
+height:195px;
+border-radius:50%;
+object-fit:cover;
+}
+
+.container{
+background:#fff;
+width:380px;
+padding:70px 30px 30px;
+border-radius:12px;
+box-shadow:0 10px 30px rgba(0,0,0,.2);
+text-align:center;
+}
+form{display:none;}
+form.active{display:block;}
+input{
+width:100%;
+padding:12px;
+margin-bottom:12px;
+border:1px solid #ddd;
+border-radius:6px;
+}
+button{
+width:100%;
+padding:12px;
+background:#ff6600;
+border:none;
+color:#fff;
+font-size:16px;
+border-radius:6px;
+}
+.switch span{color:#ff6600;cursor:pointer;font-weight:bold;}
+</style><!-- =============== SHOP STYLE ================= --><style>
+body{margin:0;font-family:Arial,sans-serif;background:#f5f5f5}
+header{background:#ff6600;color:#fff;text-align:center;padding:15px;font-size:20px}
+nav{
+position:fixed;
+bottom:0;
+width:100%;
+background:#fff;
+display:flex;
+border-top:1px solid #ddd;
+z-index:999;
+}
+
+nav button{
+flex:1;
+padding:10px;
+border:none;
+background:none;
+font-size:12px;
+color:#000;/* <<< แก้แล้ว */
+}
+
+section{display:none;padding:15px;padding-bottom:90px}
+section.active{display:block}
+.product{background:#fff;border-radius:10px;padding:10px;margin-bottom:12px;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+.product img{width:250px;height:250px;object-fit:cover;border-radius:8px;display:block;margin:auto}
+.btn{background:#ff6600;color:#fff;border:none;padding:10px;width:100%;border-radius:8px;margin-top:6px;font-size:14px}
+input,textarea{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #ccc}
+.cart-item{background:#fff;padding:10px;margin-bottom:8px;border-radius:8px}
+.qr{width:250px;display:block;margin:10px auto}
+.fullscreen{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:none;justify-content:center;align-items:center;z-index:999}
+.fullscreen img{width:100%}
+</style></head><body><!-- ================= LOGIN PAGE ================= --><div id="loginPage" style="display:none;">
+  <div class="wrapper"> 
+<div class="logo-float">
+<img id="shopLogo" src="images/logo.png">
+</div> 
+<div class="container">
+<form id="loginForm" class="active" onsubmit="return false;">
+<h2>เข้าสู่ระบบ</h2>
+<input id="loginUser" placeholder="ชื่อผู้ใช้ / อีเมล">
+<input id="loginPass" type="password" placeholder="รหัสผ่าน">
+<button type="button" onclick="login()">เข้าสู่ระบบ</button>
+<div class="switch">ยังไม่มีบัญชี? <span onclick="showRegister()">สมัครสมาชิก</span></div>
+</form><form id="registerForm" onsubmit="return false;">
+<h2>สมัครสมาชิก</h2>
+<input id="regUser" type="email" placeholder="อีเมล">
+<input id="regPass" type="password" placeholder="รหัสผ่าน">
+<input id="regConfirm" type="password" placeholder="ยืนยันรหัสผ่าน">
+<button type="button" onclick="register()">สมัครสมาชิก</button>
+<div class="switch">มีบัญชีแล้ว? <span onclick="showLogin()">เข้าสู่ระบบ</span></div>
+</form></div>
+</div>
+</div><!-- ================= SHOP PAGE ================= --><div id="shopPage" style="display:none;"><header>
+🛒 ร้านค้าออนไลน์
+</header><section id="home" class="active">
+<h3>สินค้าแนะนำ</h3>
+<div id="productList"></div>
+</section><section id="cart">
+<h3>ตะกร้าสินค้า</h3>
+<div id="cartList"></div>
+<p><b>รวมทั้งหมด:</b> <span id="totalPrice">0</span> บาท</p>
+<hr>
+<h4>สถานะออเดอร์ของคุณ</h4>
+<div id="myOrderStatus">ยังไม่มีออเดอร์</div>
+<h4>ข้อมูลผู้รับ</h4>
+<input id="customerName" placeholder="ชื่อผู้รับ">
+<input id="phone" placeholder="เบอร์โทร">
+<textarea id="address" placeholder="ที่อยู่"></textarea><button class="btn" onclick="goPayment()">ไปหน้าชำระเงิน</button></section>
+<section id="payment">
+<h3>ชำระเงิน</h3>
+<div id="customerInfo"></div>
+<p><b>ยอดที่ต้องชำระ:</b> <span id="payTotal"></span> บาท</p>
+<hr><p><b>ชื่อบัญชี:</b> นาย กันตพงศ์ บุญเจริญ</p>
+<p><b>ธนาคาร:</b> ไทยพาณิชย์</p>
+<p><b>เลขบัญชี:</b> 414-2-12957-8</p>
+<img class="qr"
+src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=4142129578"><button class="btn" onclick="copyAccount()">คัดลอกเลขบัญชี</button>
+
+<p><b>แนบสลิปการโอน</b></p>
+<input type="file" id="slipFile" accept="image/*"><button class="btn" onclick="uploadSlip()">ส่งสลิป</button>
+
+<a href="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=4142129578" download>
+<button class="btn">💾 บันทึก QR Code</button>
+</a><a href="https://line.me/ti/p/YOUR_LINE_ID">
+<button class="btn">📤 รายงานสลิป (LINE ร้าน)</button>
+</a>
+</section><section id="contact">
+<h3>ติดต่อเรา</h3>
+<p>📞 099-999-9999</p>
+<p>📱 LINE: @yourline</p>
+</section><nav>
+<button onclick="show('home')">หน้าแรก</button>
+<button onclick="show('cart')">ตะกร้า</button>
+<button onclick="show('payment')">ชำระเงิน</button>
+<button onclick="show('contact')">ติดต่อ</button>
+<button onclick="logout()" style="color:red;font-weight:bold;">ออกจากระบบ
+</button>
+</nav> </div> <div id="imgView" class="fullscreen" onclick="closeImg()">
+<img id="imgFull">
+</div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script><script>
+const firebaseConfig = {
+apiKey: "AIzaSyD_PEsWuy3Ad7Wfl6V1KmLYUxX_V5MDxto",
+authDomain: "openking-shop.firebaseapp.com",
+databaseURL: "https://openking-shop-default-rtdb.firebaseio.com",
+projectId: "openking-shop",
+storageBucket: "openking-shop.firebasestorage.app",
+messagingSenderId: "408359377995",     appId: "1:408359377995:web:32f3c2b29a06fa01abc1ce"
+};
+</script>
+<script>
+if(!firebase.apps.length){
+firebase.initializeApp(firebaseConfig);
+
+}
+const auth = firebase.auth();
+const db = firebase.database();auth.onAuthStateChanged(user=>{
+if(user){
+
+db.ref("users/"+user.uid+"/role")
+.once("value")
+.then(snapshot=>{
+
+if(snapshot.val()==="user"){
+
+document.getElementById("loginPage").style.display="none";
+
+document.getElementById("loginPage").style.zIndex="-1";
+document.getElementById("shopPage").style.display="block";
+
+loadProducts();
+loadMyOrder();
+
+}else{
+auth.signOut();
+}
+
+});
+
+}else{
+
+document.getElementById("loginPage").style.display="flex";
+document.getElementById("shopPage").style.display="none";
+
+}
+});
+</script>
+
+<script>
+
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+
+const loginUser = document.getElementById("loginUser");
+const loginPass = document.getElementById("loginPass");
+
+const regUser = document.getElementById("regUser");
+const regPass = document.getElementById("regPass");
+const regConfirm = document.getElementById("regConfirm");
+
+/* ===== สลับฟอร์ม ===== */
+function showRegister(){
+loginForm.classList.remove("active");
+registerForm.classList.add("active");
+}
+
+function showLogin(){
+registerForm.classList.remove("active");
+loginForm.classList.add("active");
+}
+
+/* ===== สมัครสมาชิก ===== */
+function register(){
+
+const email = regUser.value.trim();
+const pass = regPass.value;
+const confirm = regConfirm.value;
+
+if(pass !== confirm){
+alert("รหัสผ่านไม่ตรงกัน");
+return;
+}
+
+auth.createUserWithEmailAndPassword(email, pass)
+.then((cred)=>{
+
+db.ref("users/"+cred.user.uid).set({
+email: email,
+role: "user"
+});
+
+alert("สมัครสมาชิกสำเร็จ");
+showLogin();
+
+})
+.catch(err=>{
+    alert(err.message);
+  });
+
+}
+
+/* ===== เข้าสู่ระบบ ===== */
+function login(){
+
+const email = loginUser.value.trim();
+const pass = loginPass.value.trim();
+
+auth.signInWithEmailAndPassword(email, pass)
+  .then((cred)=>{
+
+    db.ref("users/"+cred.user.uid+"/role")
+    .once("value")
+    .then(snapshot=>{
+
+      if(snapshot.val()==="user"){
+       document.getElementById("loginPage").style.display="none";
+        document.getElementById("shopPage").style.display="block";
+}else{
+  alert("บัญชีนี้ไม่สามารถเข้าหน้าร้านได้");
+        auth.signOut();
+      }
+
+    });
+
+  })
+  .catch(()=>{
+    alert("อีเมลหรือรหัสผ่านผิด");
+});
+
+}
+
+/* ===== ออกจากระบบ ===== */
+    function logout(){
+    auth.signOut().then(()=>{
+    document.getElementById("loginPage").style.display="flex";
+    document.getElementById("shopPage").style.display="none";
+  });
+}
+
+</script><script>
+/* ===== DOM ===== */
+const productList=document.getElementById("productList");
+const cartList=document.getElementById("cartList");
+const totalPrice=document.getElementById("totalPrice");
+const customerName=document.getElementById("customerName");
+const phone=document.getElementById("phone");
+const address=document.getElementById("address");
+const customerInfo=document.getElementById("customerInfo");
+const payTotal=document.getElementById("payTotal");
+const imgView=document.getElementById("imgView");
+const imgFull=document.getElementById("imgFull");
+
+
+let cart=[];
+let products = [];
+
+/* ===== โหลดสินค้า ===== */
+function loadProducts(){
+
+db.ref("products").on("value", snapshot=>{
+
+  products = [];
+  let html="";
+
+  snapshot.forEach(child=>{
+let stock = parseInt(child.val().stock);
+if(isNaN(stock)) stock = 0;
+
+products.push({
+  id: child.key,
+  name: child.val().name || "",
+  scent: child.val().scent || "",
+  price: Number(child.val().price) || 0,
+  stock: stock,
+  img: child.val().img || ""
+});
+  });
+
+  products.forEach((p,i)=>{
+
+if(p.stock <= 0){
+  return; // ไม่แสดงสินค้าที่หมด
+}
+
+    html+=`
+    <div class="product">
+<img src="${p.img || 'images/noimage.png'}"
+          onclick="viewImg('${p.img || 'images/noimage.png'}')">
+
+      <h4>${p.name}</h4>
+      <p>กลิ่น: ${p.scent || '-'}</p>
+      <p>ราคา: ${p.price} บาท</p>
+      <p>คงเหลือ: ${p.stock} ชิ้น</p>
+      <p>ขายแล้ว: ${p.stock} ชิ้น</p>
+      <input type="number" id="qty${i}" value="1" min="1" max="${p.stock}">
+    <button class="btn" onclick="addCart(${i})">เพิ่มลงตะกร้า</button>
+
+<button class="btn" onclick="buyNow(${i})">ซื้อสินค้า</button>
+    </div>
+ `;
+
+  });
+
+  productList.innerHTML = html;
+
+});
+
+}
+
+/* ===== ตะกร้า ===== */
+function addCart(i){
+
+const qty = parseInt(document.getElementById("qty"+i).value);
+const stock = parseInt(products[i].stock);
+
+if(qty > stock){
+  alert("สินค้าในสต๊อกไม่พอ");
+  return;
+}
+
+cart.push({...products[i],qty});
+show("cart");
+loadCart();
+
+}
+
+function buyNow(i){
+
+const qty = parseInt(document.getElementById("qty"+i).value);
+const stock = parseInt(products[i].stock);
+
+if(qty > stock){
+  alert("สินค้าในสต๊อกไม่พอ");
+  return;
+}
+
+cart.push({...products[i],qty});
+show("cart");
+loadCart();
+
+}
+
+function loadCart(){
+let html="";
+let total=0;
+cart.forEach(p=>{
+const sum = Number(p.price) * Number(p.qty);
+total+=sum;
+html+=`<div class="cart-item">${p.name} x ${p.qty} = ${sum} บาท</div>`;
+});
+cartList.innerHTML=html;
+totalPrice.innerText=total;
+
+}
+
+/* ===== เมนู ===== */
+function show(id){
+document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
+
+/* ===== ชำระเงิน ===== */
+function goPayment(){
+
+const n = customerName.value;
+const p = phone.value;
+const a = address.value;
+
+if(!n || !p || !a){
+alert("กรอกข้อมูลให้ครบ");
+  return;
+}
+
+if(cart.length==0){
+  alert("ยังไม่มีสินค้าในตะกร้า");
+  return;
+}
+
+/* รวมยอด */
+let total = 0;
+cart.forEach(i=>{
+  total += Number(i.price) * Number(i.qty);
+});
+
+/* ✅ บันทึกออเดอร์ */
+let orderRef = db.ref("orders").push();
+
+orderRef.set({
+  uid: auth.currentUser.uid,
+  customer: n,
+  phone: p,
+  address: a,
+items: cart,
+  total: total,
+  status: "รอชำระเงิน",
+  time: Date.now()
+});
+
+/* ✅ ตัดสต๊อกสินค้า */
+cart.forEach(item=>{
+
+let newStock = item.stock - item.qty;
+
+if(newStock < 0) newStock = 0;
+
+  db.ref("products/"+item.id+"/stock").set(newStock);
+
+});
+cart = [];
+loadCart();
+
+customerInfo.innerHTML = `
+<p>ผู้รับ: ${n}</p>
+<p>โทร: ${p}</p>
+<p>ที่อยู่: ${a}</p>
+`;
+
+payTotal.innerText = total;
+show("payment");
+loadMyOrder();
+localStorage.setItem("lastOrderId", orderRef.key);
+
+}
+
+/* ===== รูป ===== */
+function viewImg(src){
+imgFull.src=src;
+imgView.style.display="flex";
+}
+function closeImg(){
+imgView.style.display="none";
+}
+
+/* ===== คัดลอกบัญชี ===== */
+function copyAccount(){
+navigator.clipboard.writeText("414-2-12957-8");
+alert("คัดลอกเลขบัญชีแล้ว");
+}
+/* โหลดสินค้าทันที */
+
+function loadMyOrder(){
+
+const user = auth.currentUser;
+if(!user) return;
+
+db.ref("orders")
+.orderByChild("uid")
+.equalTo(user.uid)
+.on("value", snapshot=>{
+
+let html="";
+
+snapshot.forEach(child=>{
+let o = child.val();
+html += `
+<div class="card">
+<p>ยอด: ${o.total} บาท</p>
+<p>สถานะ: <b>${o.status}</b></p>
+
+${
+o.status === "รอชำระเงิน"
+? `<button onclick="cancelOrder('${child.key}')"
+class="btn" style="background:red;">
+ยกเลิกออเดอร์
+  </button>`
+: ``
+ }
+
+</div>
+`;
+  });
+
+if(html===""){
+   html="ยังไม่มีออเดอร์";
+  }
+
+document.getElementById("myOrderStatus").innerHTML=html;
+
+});
+
+}
+
+function cancelOrder(orderId){
+
+ if(!confirm("ต้องการยกเลิกออเดอร์นี้ใช่หรือไม่?")){
+return;
+ }
+
+ db.ref("orders/"+orderId).once("value")
+ .then(snapshot=>{
+
+let order = snapshot.val();
+
+if(!order) return;
+
+// คืนสต๊อก
+order.items.forEach(item=>{
+
+db.ref("products/"+item.id+"/stock")
+
+.once("value")
+.then(snap=>{
+let current = snap.val() || 0;
+db.ref("products/"+item.id+"/stock")
+.set(current + item.qty);
+});
+
+});
+
+// เปลี่ยนสถานะ
+db.ref("orders/"+orderId+"/status")
+.set("ยกเลิกแล้ว");
+
+alert("ยกเลิกออเดอร์เรียบร้อย");
+
+ });
+
+}
+console.log("SYSTEM READY");
+function uploadSlip(){
+
+const file = document.getElementById("slipFile").files[0];
+
+if(!file){
+alert("กรุณาแนบสลิป");
+return;
+}
+
+let reader = new FileReader();
+
+reader.onload = function(e){
+
+let base64Slip = e.target.result;
+let orderId = localStorage.getItem("lastOrderId");
+
+db.ref("orders/"+orderId)
+.update({
+slip: base64Slip,
+status: "รอตรวจสอบ"
+});
+
+alert("ส่งสลิปเรียบร้อย");
+
+}
+
+reader.readAsDataURL(file);
+
+}
+
+</script>
+
+<script>
+db.ref("shop/logo").on("value", snapshot=>{
+if(snapshot.exists()){
+document.getElementById("shopLogo").src = snapshot.val();
+}
+});
+</script>
+
+</body>
+</html>
